@@ -10,8 +10,20 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import nc from "next-connect";
 import type { ApiResponse } from "@/models/ApiResponse";
 
-// * We specify the generic type parameters to enforce the return type.
-export function base<T, Req extends NextApiRequest = NextApiRequest, Res extends NextApiResponse<ApiResponse<T, string>> = NextApiResponse>() {
+/**
+ * * We specify the generic type parameters to enforce the return type.
+ * * We are making a few asumptions here:
+ * * - The base and middleware functions WILL NOT return anything of type T.
+ * * - The base and middleware functions WILL ONLY return some form of error.
+ * * - Error objects must be of the same shape (i.e. string) since we assert that, thats the return type for our error responses.
+ * *   thus we cannot let the consumer pass in a type E. If we do, there is no guarantee of the shape of the error object, thus
+ * *   violating the constraint of the ApiResponse type.
+ */
+export default function base<
+  T,
+  Req extends NextApiRequest = NextApiRequest,
+  Res extends NextApiResponse<ApiResponse<T, string>> = NextApiResponse
+>() {
   return nc<Req, Res>({
     onError: (err, req, res) => {
       //You will only be able to inspect the request structure when error occurs
