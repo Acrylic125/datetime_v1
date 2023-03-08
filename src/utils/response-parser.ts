@@ -7,13 +7,37 @@ const ResponseSchema = z.object({
   message: z.string(),
 });
 
-export default function parseResponse<T, D>(zodSchema: z.ZodSchema<T>, data: D): T {
+export default function parseResponse<T, D>(
+  zodSchema: z.ZodSchema<T>,
+  data: D
+):
+  | {
+      data: T;
+      error?: never;
+    }
+  | {
+      data?: never;
+      error: unknown;
+    } {
   const response = ResponseSchema.parse(data);
   if (response.error) {
-    throw new Error(response.error);
+    return {
+      error: response.error,
+    };
   }
   if (!response.data) {
-    throw new Error("No data in response");
+    return {
+      error: new Error("No data found"),
+    };
   }
-  return zodSchema.parse(response.data);
+  try {
+    const data = zodSchema.parse(response.data);
+    return {
+      data,
+    };
+  } catch (error) {
+    return {
+      error,
+    };
+  }
 }
